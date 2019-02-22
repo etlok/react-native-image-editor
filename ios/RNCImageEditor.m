@@ -52,6 +52,9 @@ RCT_EXPORT_METHOD(cropImage:(NSURLRequest *)imageRequest
     // Crop image
     CGSize targetSize = rect.size;
     CGRect targetRect = {{-rect.origin.x, -rect.origin.y}, image.size};
+    [[UIColor whiteColor] setFill];
+    UIRectFill( targetRect );
+    
     CGAffineTransform transform = RCTTransformFromTargetRect(image.size, targetRect);
     UIImage *croppedImage = RCTTransformImage(image, targetSize, image.scale, transform);
 
