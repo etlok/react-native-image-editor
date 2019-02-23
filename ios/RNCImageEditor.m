@@ -52,11 +52,9 @@ RCT_EXPORT_METHOD(cropImage:(NSURLRequest *)imageRequest
     // Crop image
     CGSize targetSize = rect.size;
     CGRect targetRect = {{-rect.origin.x, -rect.origin.y}, image.size};
-    [[UIColor whiteColor] setFill];
-    UIRectFill( targetRect );
     
     CGAffineTransform transform = RCTTransformFromTargetRect(image.size, targetRect);
-    UIImage *croppedImage = RCTTransformImage(image, targetSize, image.scale, transform);
+    UIImage *croppedImage = RLVTransformImage(image, targetSize, image.scale, transform);
 
     // Scale image
     if (cropData[@"displaySize"]) {
@@ -64,7 +62,7 @@ RCT_EXPORT_METHOD(cropImage:(NSURLRequest *)imageRequest
       RCTResizeMode resizeMode = [RCTConvert RCTResizeMode:cropData[@"resizeMode"] ?: @"contain"];
       targetRect = RCTTargetRect(croppedImage.size, targetSize, 1, resizeMode);
       transform = RCTTransformFromTargetRect(croppedImage.size, targetRect);
-      croppedImage = RCTTransformImage(croppedImage, targetSize, image.scale, transform);
+      croppedImage = RLVTransformImage(croppedImage, targetSize, image.scale, transform);
     }
 
     // Store image
@@ -80,4 +78,28 @@ RCT_EXPORT_METHOD(cropImage:(NSURLRequest *)imageRequest
   }];
 }
 
+UIImage *__nullable RLVTransformImage(UIImage *image,
+                                      CGSize destSize,
+                                      CGFloat destScale,
+                                      CGAffineTransform transform)
+{
+    if (destSize.width <= 0 | destSize.height <= 0 || destScale <= 0) {
+        return nil;
+    }
+    
+    BOOL opaque = !RCTImageHasAlpha(image.CGImage);
+    UIGraphicsBeginImageContextWithOptions(destSize, opaque, destScale);
+    [[UIColor whiteColor] setFill];
+    CGRect targetRect = {{0, 0}, destSize};
+    UIRectFill( targetRect );
+    CGContextRef currentContext = UIGraphicsGetCurrentContext();
+    CGContextConcatCTM(currentContext, transform);
+    [image drawAtPoint:CGPointZero];
+    UIImage *result = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return result;
+}
+
+
 @end
+
